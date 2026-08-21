@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration name="Web: dev + debug" type="CompoundRunConfigurationType">
+    <toRun name="Web: dev" type="js.build_tools.npm" />
+    <toRun name="Web: debug (Chrome)" type="JavascriptDebugType" />
+    <method v="2" />
+  </configuration>
+</component>
