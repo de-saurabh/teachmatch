@@ -1,0 +1,21 @@
+import { betterAuth } from "better-auth";
+import { prismaAdapter } from "better-auth/adapters/prisma";
+
+import { db } from "./db";
+
+export const auth = betterAuth({
+  database: prismaAdapter(db, { provider: "postgresql" }),
+  emailAndPassword: {
+    enabled: true,
+  },
+  user: {
+    additionalFields: {
+      accountType: {
+        type: "string",
+        required: true,
+        input: true,
+      },
+    },
+  },
+  trustedOrigins: [process.env.WEB_ORIGIN ?? "http://localhost:5173"],
+});
