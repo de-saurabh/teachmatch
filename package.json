@@ -1,0 +1,21 @@
+{
+  "name": "teachmatch",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:api": "pnpm --filter @teachmatch/api dev",
+    "dev:web": "pnpm --filter @teachmatch/web dev",
+    "dev:mobile": "pnpm --filter @teachmatch/mobile start",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @teachmatch/e2e test"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "pnpm@11.21.0"
+}

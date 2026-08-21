@@ -1,0 +1,356 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------- core identity ----------
+
+enum AccountType {
+  SCHOOL
+  AGENCY
+  TEACHER
+}
+
+model User {
+  id          String      @id @default(cuid())
+  email       String      @unique
+  phone       String?     @unique
+  accountType AccountType
+  status      UserStatus  @default(ACTIVE)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  schoolProfile   SchoolProfile?
+  agencyProfile   AgencyProfile?
+  teacherProfile  TeacherProfile?
+
+  adminPermissions      AdminPermission[]
+  reportsFiled          Report[]              @relation("ReportsFiled")
+  verificationDocuments VerificationDocument[]
+  notifications         Notification[]
+
+  impersonationsStarted ImpersonationSession[] @relation("ImpersonatedBy")
+  impersonationsOf       ImpersonationSession[] @relation("ImpersonationTarget")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+// ---------- verification ----------
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum DocumentType {
+  DEGREE
+  B_ED
+  CTET_TET
+  ID_PROOF
+  SCHOOL_AFFILIATION
+  AGENCY_REGISTRATION
+}
+
+// One row per uploaded file; deletedAt is set (and the underlying
+// object purged from storage) immediately on account deletion —
+// see build-notes: documents are admin-only, no retention window.
+model VerificationDocument {
+  id         String       @id @default(cuid())
+  ownerId    String
+  owner      User         @relation(fields: [ownerId], references: [id])
+  docType    DocumentType
+  fileUrl    String
+  uploadedAt DateTime     @default(now())
+  deletedAt  DateTime?
+}
+
+// ---------- profiles ----------
+
+model SchoolProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  name          String
+  board         String // CBSE / ICSE / State board name / IB
+  udiseCode     String?
+  city          String
+  state         String
+
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedById        String?
+  verifiedAt          DateTime?
+
+  isHidden       Boolean @default(true) // stays true until VERIFIED
+  hiddenReason   String? // set on report auto-hide, distinct from pending-verification
+
+  jobPostings JobPosting[]
+  reportsReceived Report[] @relation("ReportsOnSchool")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AgencyProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  name String
+
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedById         String?
+  verifiedAt           DateTime?
+
+  isHidden Boolean @default(true)
+
+  candidates       AgencyCandidate[]
+  applicationsMade Application[]     @relation("SubmittedByAgency")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// A teacher an agency represents. May or may not correspond to a
+// registered TeacherProfile — agency relationship is intentionally
+// thin for MVP (see pitch doc, section 05).
+model AgencyCandidate {
+  id               String          @id @default(cuid())
+  agencyId         String
+  agency           AgencyProfile   @relation(fields: [agencyId], references: [id])
+  teacherProfileId String?
+  teacherProfile   TeacherProfile? @relation(fields: [teacherProfileId], references: [id])
+
+  name  String
+  phone String?
+
+  createdAt DateTime @default(now())
+}
+
+model TeacherProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  fullName        String
+  subjects        String[]
+  gradeLevels     String[]
+  experienceYears Int
+  city            String
+  state           String
+
+  profilePhotoUrl String?
+  demoVideoUrl    String?
+
+  salaryMin     Int?
+  salaryMax     Int?
+  salaryLeeway  Int?
+
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedById         String?
+  verifiedAt           DateTime?
+
+  isHidden Boolean @default(true)
+  hiddenReason String?
+
+  agencyCandidateOf AgencyCandidate[]
+  applications      Application[]
+  matches           MatchCandidate[]
+  reportsReceived   Report[]          @relation("ReportsOnTeacher")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- jobs, matching, applications ----------
+
+model JobPosting {
+  id       String        @id @default(cuid())
+  schoolId String
+  school   SchoolProfile @relation(fields: [schoolId], references: [id])
+
+  subject     String
+  gradeLevel  String
+  board       String
+  city        String
+  state       String
+  isUrgent    Boolean     @default(false) // emergency-fill posting
+
+  salaryMin    Int?
+  salaryMax    Int?
+  salaryLeeway Int?
+
+  status JobPostingStatus @default(OPEN)
+
+  matches      MatchCandidate[]
+  applications Application[]
+
+  createdAt DateTime  @default(now())
+  filledAt  DateTime?
+}
+
+enum JobPostingStatus {
+  OPEN
+  FILLED
+  CLOSED
+}
+
+// One row per (job, teacher) pair the matching engine has scored.
+// Swipe state lives here so a mutual LIKE can be detected directly —
+// see pitch doc section 03/04: swipe is just an entry point into the
+// same application pipeline as a direct web apply.
+model MatchCandidate {
+  id               String  @id @default(cuid())
+  jobPostingId     String
+  jobPosting       JobPosting @relation(fields: [jobPostingId], references: [id])
+  teacherProfileId String
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+
+  score Float // matching engine output, both directions use the same score
+
+  schoolSwipe  SwipeDirection @default(PENDING)
+  teacherSwipe SwipeDirection @default(PENDING)
+  matchedAt    DateTime?      // set when both swipes are LIKE
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobPostingId, teacherProfileId])
+}
+
+enum SwipeDirection {
+  PENDING
+  LIKE
+  PASS
+}
+
+model Application {
+  id               String     @id @default(cuid())
+  jobPostingId     String
+  jobPosting       JobPosting @relation(fields: [jobPostingId], references: [id])
+  teacherProfileId String
+  teacherProfile   TeacherProfile @relation(fields: [teacherProfileId], references: [id])
+
+  source           ApplicationSource
+  submittedByAgencyId String?
+  submittedByAgency   AgencyProfile? @relation("SubmittedByAgency", fields: [submittedByAgencyId], references: [id])
+
+  status    ApplicationStatus @default(APPLIED)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([jobPostingId, teacherProfileId])
+}
+
+enum ApplicationSource {
+  SEARCH
+  SWIPE_MATCH
+  AGENCY_SUBMITTED
+}
+
+enum ApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  INTERVIEW
+  OFFER
+  HIRED
+  REJECTED
+}
+
+// ---------- trust & safety ----------
+
+enum ReportedProfileType {
+  SCHOOL
+  TEACHER
+  AGENCY
+}
+
+enum ReportStatus {
+  OPEN
+  REVIEWED
+  DISMISSED
+}
+
+// Auto-hide threshold (small N reports -> isHidden on the target
+// profile) is enforced in application code, not the schema.
+model Report {
+  id     String @id @default(cuid())
+
+  reporterId String
+  reporter   User   @relation("ReportsFiled", fields: [reporterId], references: [id])
+
+  reportedProfileType ReportedProfileType
+  reportedSchoolId    String?
+  reportedSchool      SchoolProfile?  @relation("ReportsOnSchool", fields: [reportedSchoolId], references: [id])
+  reportedTeacherId   String?
+  reportedTeacher     TeacherProfile? @relation("ReportsOnTeacher", fields: [reportedTeacherId], references: [id])
+
+  reason String
+  status ReportStatus @default(OPEN)
+
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+// ---------- admin & impersonation ----------
+
+enum Permission {
+  CAN_REVIEW_VERIFICATION
+  CAN_REVIEW_REPORTS
+  CAN_MANAGE_USERS
+  CAN_IMPERSONATE
+  CAN_VIEW_ANALYTICS
+}
+
+model AdminPermission {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  permission  Permission
+  grantedById String?
+  grantedAt   DateTime   @default(now())
+
+  @@unique([userId, permission])
+}
+
+// Audit trail for "mock as user" debugging — see build-notes.
+model ImpersonationSession {
+  id             String    @id @default(cuid())
+  adminUserId    String
+  adminUser      User      @relation("ImpersonatedBy", fields: [adminUserId], references: [id])
+  targetUserId   String
+  targetUser     User      @relation("ImpersonationTarget", fields: [targetUserId], references: [id])
+
+  reason    String
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+}
+
+// ---------- notifications ----------
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+}
+
+model Notification {
+  id      String              @id @default(cuid())
+  userId  String
+  user    User                @relation(fields: [userId], references: [id])
+  channel NotificationChannel
+  type    String // e.g. "APPLICATION_STATUS_CHANGED", "URGENT_JOB_MATCH"
+  payload Json
+
+  sentAt DateTime  @default(now())
+  readAt DateTime?
+}
