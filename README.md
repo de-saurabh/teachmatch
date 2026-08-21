@@ -80,6 +80,20 @@ pnpm --filter @teachmatch/api test:db:migrate   # first time only
 pnpm --filter @teachmatch/api test
 ```
 
+## Connecting a DB client (DBeaver, etc.)
+
+The dev Postgres runs on **port 5434**, not the default 5432 — deliberately, to avoid clashing with a native Postgres install some machines already have running there.
+
+| Field | Value |
+|---|---|
+| Host | `localhost` |
+| Port | `5434` |
+| Database | `teachmatch` |
+| Username | `teachmatch` |
+| Password | `teachmatch` |
+
+(Local dev credentials only, defined in `docker-compose.yml` — not meant for anything beyond your machine.)
+
 ## Environment variables
 
 | App | File | Notes |
