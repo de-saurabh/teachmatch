@@ -1,3 +1,4 @@
+import { apiReference } from "@scalar/express-api-reference";
 import { toNodeHandler } from "better-auth/node";
 import express from "express";
 
@@ -12,6 +13,14 @@ export function createApp() {
 
   app.use(express.json());
   app.use(healthRouter);
+
+  app.use(
+    "/docs",
+    apiReference({
+      url: "/api/auth/open-api/generate-schema",
+      theme: "purple",
+    }),
+  );
 
   return app;
 }
