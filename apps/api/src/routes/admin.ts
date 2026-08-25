@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { db } from "../config/db";
 import { requireAuth, requirePermission } from "../middleware/require-auth";
+import { syncMatchesForJobPosting, syncMatchesForTeacher } from "../services/match-sync";
 
 export const adminRouter = Router();
 
@@ -77,6 +78,14 @@ adminRouter.patch(
       },
     });
 
+    if (parsed.data.status === "VERIFIED") {
+      const openPostings = await db.jobPosting.findMany({
+        where: { schoolId: school.id, status: "OPEN" },
+        select: { id: true },
+      });
+      await Promise.all(openPostings.map((posting) => syncMatchesForJobPosting(posting.id)));
+    }
+
     res.json({ school });
   },
 );
@@ -101,6 +110,10 @@ adminRouter.patch(
         isHidden: parsed.data.status !== "VERIFIED",
       },
     });
+
+    if (parsed.data.status === "VERIFIED") {
+      await syncMatchesForTeacher(teacher.id);
+    }
 
     res.json({ teacher });
   },

@@ -13,7 +13,9 @@ import { NewJobPostingPage } from "./routes/NewJobPostingPage";
 import { OnboardingSchoolPage } from "./routes/OnboardingSchoolPage";
 import { OnboardingTeacherPage } from "./routes/OnboardingTeacherPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { SchoolMatchesPage } from "./routes/SchoolMatchesPage";
 import { SignupPage } from "./routes/SignupPage";
+import { TeacherMatchesPage } from "./routes/TeacherMatchesPage";
 
 function App() {
   return (
@@ -98,6 +100,26 @@ function App() {
             <ProtectedRoute>
               <AppShell>
                 <JobApplicantsPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/jobs/:id/matches"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <SchoolMatchesPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/matches/mine"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <TeacherMatchesPage />
               </AppShell>
             </ProtectedRoute>
           }

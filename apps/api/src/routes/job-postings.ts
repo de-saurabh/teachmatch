@@ -6,6 +6,7 @@ import { z } from "zod";
 import { computeSalaryBadge } from "../domain/salary";
 import { db } from "../config/db";
 import { getOptionalSession, requireAccountType, requireAuth } from "../middleware/require-auth";
+import { syncMatchesForJobPosting } from "../services/match-sync";
 
 export const jobPostingsRouter = Router();
 
@@ -184,6 +185,8 @@ jobPostingsRouter.post("/api/job-postings", requireAuth, requireAccountType("SCH
   const posting = await db.jobPosting.create({
     data: { schoolId: schoolProfile.id, ...parsed.data },
   });
+
+  await syncMatchesForJobPosting(posting.id);
 
   res.status(201).json({ posting });
 });

@@ -74,6 +74,9 @@ export function MyJobPostingsPage() {
                   <Link to={`/jobs/${posting.id}/applicants`}>
                     <Button size="small">Applicants</Button>
                   </Link>
+                  <Link to={`/jobs/${posting.id}/matches`}>
+                    <Button size="small">Suggested</Button>
+                  </Link>
                 </Space>
                 <Space>
                   {posting.status !== "FILLED" && (

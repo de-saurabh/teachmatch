@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { db } from "../config/db";
 import { requireAccountType, requireAuth } from "../middleware/require-auth";
+import { syncMatchesForTeacher } from "../services/match-sync";
 
 export const teacherProfileRouter = Router();
 
@@ -35,6 +36,8 @@ teacherProfileRouter.put("/api/teacher-profile/me", requireAuth, requireAccountT
     create: { userId: req.session!.user.id, ...parsed.data },
     update: parsed.data,
   });
+
+  await syncMatchesForTeacher(profile.id);
 
   res.json({ profile });
 });
