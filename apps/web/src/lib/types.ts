@@ -35,6 +35,35 @@ export interface MyJobPosting {
   applicationCount: number;
 }
 
+export interface MyApplication {
+  id: string;
+  status: ApplicationStatus;
+  createdAt: string;
+  jobPosting: {
+    id: string;
+    subject: string;
+    gradeLevel: string;
+    board: string;
+    city: string;
+    state: string;
+    schoolName: string;
+  };
+}
+
+export interface JobPosting {
+  id: string;
+  subject: string;
+  gradeLevel: string;
+  board: string;
+  city: string;
+  state: string;
+  isUrgent: boolean;
+  status: "OPEN" | "FILLED" | "CLOSED";
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryLeeway: number | null;
+}
+
 export interface JobApplicant {
   id: string;
   status: ApplicationStatus;

@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { Button, Flex, Tag, Typography } from "antd";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button, Flex, Space, Tag, Typography } from "antd";
 import { Link } from "react-router";
 
 import { apiFetch } from "../lib/api";
@@ -14,9 +14,17 @@ const statusColor: Record<MyJobPosting["status"], string> = {
 };
 
 export function MyJobPostingsPage() {
+  const queryClient = useQueryClient();
+
   const { data, isPending } = useQuery({
     queryKey: ["job-postings", "mine"],
     queryFn: () => apiFetch<{ postings: MyJobPosting[] }>("/api/job-postings/mine"),
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ postingId, status }: { postingId: string; status: MyJobPosting["status"] }) =>
+      apiFetch(`/api/job-postings/${postingId}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["job-postings", "mine"] }),
   });
 
   return (
@@ -58,9 +66,45 @@ export function MyJobPostingsPage() {
                   </Tag>
                 </Flex>
               </div>
-              <Link to={`/jobs/${posting.id}/applicants`}>
-                <Button>View applicants</Button>
-              </Link>
+              <Space direction="vertical" align="end">
+                <Space>
+                  <Link to={`/jobs/${posting.id}/edit`}>
+                    <Button size="small">Edit</Button>
+                  </Link>
+                  <Link to={`/jobs/${posting.id}/applicants`}>
+                    <Button size="small">Applicants</Button>
+                  </Link>
+                </Space>
+                <Space>
+                  {posting.status !== "FILLED" && (
+                    <Button
+                      size="small"
+                      loading={statusMutation.isPending && statusMutation.variables?.postingId === posting.id}
+                      onClick={() => statusMutation.mutate({ postingId: posting.id, status: "FILLED" })}
+                    >
+                      Mark filled
+                    </Button>
+                  )}
+                  {posting.status !== "CLOSED" && (
+                    <Button
+                      size="small"
+                      loading={statusMutation.isPending && statusMutation.variables?.postingId === posting.id}
+                      onClick={() => statusMutation.mutate({ postingId: posting.id, status: "CLOSED" })}
+                    >
+                      Close
+                    </Button>
+                  )}
+                  {posting.status !== "OPEN" && (
+                    <Button
+                      size="small"
+                      loading={statusMutation.isPending && statusMutation.variables?.postingId === posting.id}
+                      onClick={() => statusMutation.mutate({ postingId: posting.id, status: "OPEN" })}
+                    >
+                      Reopen
+                    </Button>
+                  )}
+                </Space>
+              </Space>
             </Flex>
           </div>
         ))}

@@ -2,9 +2,11 @@ import { BrowserRouter, Route, Routes } from "react-router";
 
 import { AppShell } from "./routes/AppShell";
 import { DashboardPage } from "./routes/DashboardPage";
+import { EditJobPostingPage } from "./routes/EditJobPostingPage";
 import { JobApplicantsPage } from "./routes/JobApplicantsPage";
 import { JobsBrowsePage } from "./routes/JobsBrowsePage";
 import { LoginPage } from "./routes/LoginPage";
+import { MyApplicationsPage } from "./routes/MyApplicationsPage";
 import { MyJobPostingsPage } from "./routes/MyJobPostingsPage";
 import { NewJobPostingPage } from "./routes/NewJobPostingPage";
 import { OnboardingSchoolPage } from "./routes/OnboardingSchoolPage";
@@ -80,11 +82,31 @@ function App() {
           }
         />
         <Route
+          path="/jobs/:id/edit"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <EditJobPostingPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/jobs/:id/applicants"
           element={
             <ProtectedRoute>
               <AppShell>
                 <JobApplicantsPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/applications/mine"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <MyApplicationsPage />
               </AppShell>
             </ProtectedRoute>
           }

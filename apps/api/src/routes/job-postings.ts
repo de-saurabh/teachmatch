@@ -21,16 +21,51 @@ const createSchema = z.object({
   salaryLeeway: z.number().int().min(0).optional(),
 });
 
+const updateSchema = z.object({
+  subject: z.string().min(1).optional(),
+  gradeLevel: z.string().min(1).optional(),
+  board: z.string().min(1).optional(),
+  city: z.string().min(1).optional(),
+  state: z.string().min(1).optional(),
+  isUrgent: z.boolean().optional(),
+  salaryMin: z.number().int().positive().optional(),
+  salaryMax: z.number().int().positive().optional(),
+  salaryLeeway: z.number().int().min(0).optional(),
+  status: z.enum(["OPEN", "FILLED", "CLOSED"]).optional(),
+});
+
+const browseQuerySchema = z.object({
+  subject: z.string().optional(),
+  city: z.string().optional(),
+  board: z.string().optional(),
+  isUrgent: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => (value === undefined ? undefined : value === "true")),
+});
+
 // Open postings a teacher can browse. Visibility isn't yet gated on
 // school verification status — that lands with the admin review flow.
 jobPostingsRouter.get("/api/job-postings", async (req, res) => {
+  const query = browseQuerySchema.safeParse(req.query);
+  if (!query.success) {
+    res.status(400).json({ error: query.error.issues[0].message });
+    return;
+  }
+
   const session = await getOptionalSession(req);
   const teacherProfile = session
     ? await db.teacherProfile.findUnique({ where: { userId: session.user.id } })
     : null;
 
   const postings = await db.jobPosting.findMany({
-    where: { status: "OPEN" },
+    where: {
+      status: "OPEN",
+      ...(query.data.subject && { subject: { contains: query.data.subject, mode: "insensitive" } }),
+      ...(query.data.city && { city: { contains: query.data.city, mode: "insensitive" } }),
+      ...(query.data.board && { board: { contains: query.data.board, mode: "insensitive" } }),
+      ...(query.data.isUrgent !== undefined && { isUrgent: query.data.isUrgent }),
+    },
     include: { school: { select: { name: true } } },
     orderBy: [{ isUrgent: "desc" }, { createdAt: "desc" }],
   });
@@ -88,6 +123,48 @@ jobPostingsRouter.get("/api/job-postings/mine", requireAuth, requireAccountType(
       applicationCount: posting._count.applications,
     })),
   });
+});
+
+// Single posting, for the owning school to load into an edit form.
+jobPostingsRouter.get("/api/job-postings/:id", requireAuth, requireAccountType("SCHOOL"), async (req, res) => {
+  const schoolProfile = await db.schoolProfile.findUnique({ where: { userId: req.session!.user.id } });
+  const posting = await db.jobPosting.findUnique({ where: { id: String(req.params.id) } });
+
+  if (!posting || !schoolProfile || posting.schoolId !== schoolProfile.id) {
+    res.status(404).json({ error: "Job posting not found" });
+    return;
+  }
+
+  res.json({ posting });
+});
+
+jobPostingsRouter.patch("/api/job-postings/:id", requireAuth, requireAccountType("SCHOOL"), async (req, res) => {
+  const parsed = updateSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0].message });
+    return;
+  }
+
+  const schoolProfile = await db.schoolProfile.findUnique({ where: { userId: req.session!.user.id } });
+  const existing = await db.jobPosting.findUnique({ where: { id: String(req.params.id) } });
+
+  if (!existing || !schoolProfile || existing.schoolId !== schoolProfile.id) {
+    res.status(404).json({ error: "Job posting not found" });
+    return;
+  }
+
+  const { status, ...rest } = parsed.data;
+
+  const posting = await db.jobPosting.update({
+    where: { id: existing.id },
+    data: {
+      ...rest,
+      ...(status && { status }),
+      ...(status === "FILLED" && !existing.filledAt && { filledAt: new Date() }),
+    },
+  });
+
+  res.json({ posting });
 });
 
 jobPostingsRouter.post("/api/job-postings", requireAuth, requireAccountType("SCHOOL"), async (req, res) => {

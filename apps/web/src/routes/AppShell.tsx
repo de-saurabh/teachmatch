@@ -32,6 +32,7 @@ export function AppShell({ children }: PropsWithChildren) {
         </Link>
         <Space size="large">
           {accountType === "TEACHER" && <Link to="/jobs">Browse jobs</Link>}
+          {accountType === "TEACHER" && <Link to="/applications/mine">My applications</Link>}
           {accountType === "SCHOOL" && <Link to="/jobs/mine">My postings</Link>}
           {accountType === "SCHOOL" && <Link to="/jobs/new">Post a job</Link>}
           <Button size="small" onClick={handleLogout}>
