@@ -44,11 +44,11 @@ export function LoginPage() {
           label="Email"
           rules={[{ required: true, type: "email", message: "Enter a valid email" }]}
         >
-          <Input autoComplete="email" />
+          <Input className="chalk-input" variant="underlined" autoComplete="email" />
         </Form.Item>
 
         <Form.Item name="password" label="Password" rules={[{ required: true, message: "Enter your password" }]}>
-          <Input.Password autoComplete="current-password" />
+          <Input.Password className="chalk-input" variant="underlined" autoComplete="current-password" />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 12 }}>

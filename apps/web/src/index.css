@@ -1,4 +1,96 @@
+:root {
+  --chalk-board: #24352b;
+  --chalk-board-deep: #1c2a22;
+  --chalk-white: #f4f1e6;
+  --chalk-yellow: #e4be5e;
+  --chalk-blue: #8fb3ac;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  background: #fff;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.03), transparent 40%),
+    radial-gradient(circle at 82% 75%, rgba(255, 255, 255, 0.035), transparent 45%),
+    var(--chalk-board);
+}
+
+/* ---------- chalk theme flourishes, reused across pages ---------- */
+
+.chalk-frame {
+  position: relative;
+  border: 2px dashed rgba(244, 241, 230, 0.45);
+  border-radius: 4px;
+  background: rgba(244, 241, 230, 0.02);
+}
+
+.chalk-h1 {
+  font-family: "Caveat", cursive;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  clip-path: inset(0 100% 0 0);
+  animation: chalk-write 1100ms steps(28) 200ms both;
+}
+
+.chalk-eyebrow {
+  font-family: "Figtree", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--chalk-blue);
+}
+
+.chalk-dust {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.chalk-dust i {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(244, 241, 230, 0.5);
+  animation: chalk-drift 9s ease-in-out infinite;
+}
+
+.chalk-input .ant-input-underlined,
+.chalk-input .ant-input-affix-wrapper-underlined {
+  border-bottom-style: dashed !important;
+}
+
+@keyframes chalk-write {
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes chalk-drift {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-14px) translateX(6px);
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chalk-h1 {
+    clip-path: inset(0 0 0 0);
+    animation: none;
+  }
+  .chalk-dust i {
+    animation: none;
+    opacity: 0.4;
+  }
 }

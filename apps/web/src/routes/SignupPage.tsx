@@ -61,7 +61,7 @@ export function SignupPage() {
         </Form.Item>
 
         <Form.Item name="name" label="Full name" rules={[{ required: true, message: "Enter your name" }]}>
-          <Input autoComplete="name" />
+          <Input className="chalk-input" variant="underlined" autoComplete="name" />
         </Form.Item>
 
         <Form.Item
@@ -69,7 +69,7 @@ export function SignupPage() {
           label="Email"
           rules={[{ required: true, type: "email", message: "Enter a valid email" }]}
         >
-          <Input autoComplete="email" />
+          <Input className="chalk-input" variant="underlined" autoComplete="email" />
         </Form.Item>
 
         <Form.Item
@@ -77,7 +77,7 @@ export function SignupPage() {
           label="Password"
           rules={[{ required: true, min: 8, message: "At least 8 characters" }]}
         >
-          <Input.Password autoComplete="new-password" />
+          <Input.Password className="chalk-input" variant="underlined" autoComplete="new-password" />
         </Form.Item>
 
         <Form.Item style={{ marginBottom: 12 }}>

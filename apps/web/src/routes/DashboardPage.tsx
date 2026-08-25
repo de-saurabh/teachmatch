@@ -10,10 +10,12 @@ export function DashboardPage() {
 
   return (
     <Flex vertical align="center" justify="center" gap="middle" style={{ minHeight: "100vh" }}>
-      <CheckCircleOutlined style={{ fontSize: 40, color: "#3B6E55" }} />
-      <Title level={2} style={{ margin: 0 }}>
-        Welcome, {session?.user.name}
-      </Title>
+      <CheckCircleOutlined style={{ fontSize: 36, color: "var(--chalk-yellow)" }} />
+      <div style={{ overflow: "hidden" }}>
+        <Title level={2} className="chalk-h1" style={{ fontSize: 48, margin: 0 }}>
+          Welcome, {session?.user.name}
+        </Title>
+      </div>
       <Paragraph type="secondary">
         Signed in as {session?.user.email} · {session?.user.accountType}
       </Paragraph>
