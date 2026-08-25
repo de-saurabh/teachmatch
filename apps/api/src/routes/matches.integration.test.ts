@@ -14,6 +14,10 @@ describe("matching engine and swipe flow", () => {
   let postingId: string;
   let schoolProfileId: string;
   let teacherProfileId: string;
+  // Unique per test run so this teacher can't collide with same-named
+  // fixtures created by other integration test files running in
+  // parallel against the same (shared) test database.
+  const teacherName = `Asha Verma ${randomUUID().slice(0, 8)}`;
 
   beforeAll(async () => {
     admin = await createAdminAgent(app);
@@ -34,13 +38,13 @@ describe("matching engine and swipe flow", () => {
     await admin.patch(`/api/admin/verifications/school/${schoolProfileId}`).send({ status: "VERIFIED" });
 
     await teacherAgent.post("/api/auth/sign-up/email").send({
-      name: "Asha Verma",
+      name: teacherName,
       email: `teacher-${randomUUID()}@example.com`,
       password: "supersecret123",
       accountType: "TEACHER",
     });
     const teacherProfileRes = await teacherAgent.put("/api/teacher-profile/me").send({
-      fullName: "Asha Verma",
+      fullName: teacherName,
       subjects: ["Mathematics"],
       gradeLevels: ["Grade 8"],
       experienceYears: 5,
@@ -61,11 +65,14 @@ describe("matching engine and swipe flow", () => {
   });
 
   it("surfaces the verified teacher as a candidate for the school's posting", async () => {
+    // Other verified teachers created by other test files running in
+    // parallel against the same DB can legitimately show up here too —
+    // find our own by its unique name rather than asserting an exact count.
     const res = await schoolAgent.get(`/api/matches/job-postings/${postingId}`);
     expect(res.status).toBe(200);
-    expect(res.body.matches).toHaveLength(1);
-    expect(res.body.matches[0].teacher.fullName).toBe("Asha Verma");
-    expect(res.body.matches[0].score).toBeGreaterThan(0);
+    const match = res.body.matches.find((m: { teacher: { fullName: string } }) => m.teacher.fullName === teacherName);
+    expect(match).toBeDefined();
+    expect(match.score).toBeGreaterThan(0);
   });
 
   it("surfaces the posting as a recommendation for the teacher", async () => {
@@ -80,7 +87,9 @@ describe("matching engine and swipe flow", () => {
 
   it("does not match yet after only one side swipes", async () => {
     const schoolMatches = await schoolAgent.get(`/api/matches/job-postings/${postingId}`);
-    const matchId = schoolMatches.body.matches[0].id;
+    const matchId = schoolMatches.body.matches.find(
+      (m: { teacher: { fullName: string } }) => m.teacher.fullName === teacherName,
+    )?.id;
 
     const res = await schoolAgent.post(`/api/matches/${matchId}/swipe`).send({ direction: "LIKE" });
     expect(res.status).toBe(200);
@@ -105,8 +114,13 @@ describe("matching engine and swipe flow", () => {
       applicationsRes.body.applications.some((a: { jobPosting: { id: string } }) => a.jobPosting.id === postingId),
     ).toBe(true);
 
+    // The matched pair drops out of the school's pending queue for this
+    // posting — other verified teachers created by other test files
+    // (running in parallel against the same DB) may still legitimately
+    // show up here, so check absence of this specific match, not an
+    // empty list.
     const schoolMatchesAfter = await schoolAgent.get(`/api/matches/job-postings/${postingId}`);
-    expect(schoolMatchesAfter.body.matches).toHaveLength(0);
+    expect(schoolMatchesAfter.body.matches.some((m: { id: string }) => m.id === matchId)).toBe(false);
   });
 
   it("keeps a teacher from swiping on a match that isn't theirs", async () => {
@@ -134,7 +148,9 @@ describe("matching engine and swipe flow", () => {
       state: "Maharashtra",
     });
     const matchesRes = await schoolAgent.get(`/api/matches/job-postings/${otherPosting.body.posting.id}`);
-    const matchId = matchesRes.body.matches.find((m: { teacher: { fullName: string } }) => m.teacher.fullName === "Asha Verma")?.id;
+    const matchId = matchesRes.body.matches.find(
+      (m: { teacher: { fullName: string } }) => m.teacher.fullName === teacherName,
+    )?.id;
 
     const res = await otherTeacher.post(`/api/matches/${matchId}/swipe`).send({ direction: "LIKE" });
     expect(res.status).toBe(404);
@@ -152,7 +168,7 @@ describe("matching engine and swipe flow", () => {
 
   it("never creates a match candidate for an unrelated subject", async () => {
     await teacherAgent.put("/api/teacher-profile/me").send({
-      fullName: "Asha Verma",
+      fullName: teacherName,
       subjects: ["Art"],
       gradeLevels: ["Grade 8"],
       experienceYears: 5,

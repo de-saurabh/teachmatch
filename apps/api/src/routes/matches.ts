@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { db } from "../config/db";
 import { requireAccountType, requireAuth } from "../middleware/require-auth";
+import { notifyUser } from "../services/notify";
 
 export const matchesRouter = Router();
 
@@ -84,7 +85,7 @@ matchesRouter.post("/api/matches/:id/swipe", requireAuth, async (req, res) => {
 
   const match = await db.matchCandidate.findUnique({
     where: { id: String(req.params.id) },
-    include: { jobPosting: true },
+    include: { jobPosting: { include: { school: true } }, teacherProfile: true },
   });
   if (!match) {
     res.status(404).json({ error: "Match not found" });
@@ -133,6 +134,21 @@ matchesRouter.post("/api/matches/:id/swipe", requireAuth, async (req, res) => {
         throw err;
       }
     }
+
+    await Promise.all([
+      notifyUser(match.jobPosting.school.userId, "MATCH", {
+        matchId: updated.id,
+        jobPostingId: match.jobPosting.id,
+        subject: match.jobPosting.subject,
+        teacherName: match.teacherProfile.fullName,
+      }),
+      notifyUser(match.teacherProfile.userId, "MATCH", {
+        matchId: updated.id,
+        jobPostingId: match.jobPosting.id,
+        subject: match.jobPosting.subject,
+        schoolName: match.jobPosting.school.name,
+      }),
+    ]);
   }
 
   res.json({ match: updated, matched: Boolean(updated.matchedAt) });

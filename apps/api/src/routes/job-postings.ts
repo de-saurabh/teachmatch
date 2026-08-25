@@ -7,6 +7,7 @@ import { computeSalaryBadge } from "../domain/salary";
 import { db } from "../config/db";
 import { getOptionalSession, requireAccountType, requireAuth } from "../middleware/require-auth";
 import { syncMatchesForJobPosting } from "../services/match-sync";
+import { notifyUser } from "../services/notify";
 
 export const jobPostingsRouter = Router();
 
@@ -202,7 +203,10 @@ jobPostingsRouter.post(
       return;
     }
 
-    const posting = await db.jobPosting.findUnique({ where: { id: String(req.params.id) } });
+    const posting = await db.jobPosting.findUnique({
+      where: { id: String(req.params.id) },
+      include: { school: true },
+    });
     if (!posting || posting.status !== "OPEN") {
       res.status(404).json({ error: "Job posting not found" });
       return;
@@ -216,6 +220,14 @@ jobPostingsRouter.post(
           source: "SEARCH",
         },
       });
+
+      await notifyUser(posting.school.userId, "NEW_APPLICATION", {
+        applicationId: application.id,
+        jobPostingId: posting.id,
+        subject: posting.subject,
+        teacherName: teacherProfile.fullName,
+      });
+
       res.status(201).json({ application });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {

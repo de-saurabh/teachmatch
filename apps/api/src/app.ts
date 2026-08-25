@@ -9,6 +9,7 @@ import { applicationsRouter } from "./routes/applications";
 import { healthRouter } from "./routes/health";
 import { jobPostingsRouter } from "./routes/job-postings";
 import { matchesRouter } from "./routes/matches";
+import { notificationsRouter } from "./routes/notifications";
 import { schoolProfileRouter } from "./routes/school-profile";
 import { teacherProfileRouter } from "./routes/teacher-profile";
 
@@ -33,6 +34,7 @@ export function createApp() {
   app.use(applicationsRouter);
   app.use(adminRouter);
   app.use(matchesRouter);
+  app.use(notificationsRouter);
 
   app.use(
     "/docs",

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { db } from "../config/db";
 import { requireAccountType, requireAuth } from "../middleware/require-auth";
+import { notifyUser } from "../services/notify";
 
 export const applicationsRouter = Router();
 
@@ -57,7 +58,7 @@ applicationsRouter.patch(
     const schoolProfile = await db.schoolProfile.findUnique({ where: { userId: req.session!.user.id } });
     const application = await db.application.findUnique({
       where: { id: String(req.params.id) },
-      include: { jobPosting: true },
+      include: { jobPosting: true, teacherProfile: true },
     });
 
     if (!application || !schoolProfile || application.jobPosting.schoolId !== schoolProfile.id) {
@@ -68,6 +69,13 @@ applicationsRouter.patch(
     const updated = await db.application.update({
       where: { id: application.id },
       data: { status: parsed.data.status },
+    });
+
+    await notifyUser(application.teacherProfile.userId, "APPLICATION_STATUS_CHANGED", {
+      applicationId: updated.id,
+      jobPostingId: application.jobPosting.id,
+      subject: application.jobPosting.subject,
+      status: updated.status,
     });
 
     res.json({ application: updated });

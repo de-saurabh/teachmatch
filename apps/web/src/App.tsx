@@ -10,6 +10,7 @@ import { LoginPage } from "./routes/LoginPage";
 import { MyApplicationsPage } from "./routes/MyApplicationsPage";
 import { MyJobPostingsPage } from "./routes/MyJobPostingsPage";
 import { NewJobPostingPage } from "./routes/NewJobPostingPage";
+import { NotificationsPage } from "./routes/NotificationsPage";
 import { OnboardingSchoolPage } from "./routes/OnboardingSchoolPage";
 import { OnboardingTeacherPage } from "./routes/OnboardingTeacherPage";
 import { ProtectedRoute } from "./routes/ProtectedRoute";
@@ -130,6 +131,16 @@ function App() {
             <ProtectedRoute>
               <AppShell>
                 <MyApplicationsPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <NotificationsPage />
               </AppShell>
             </ProtectedRoute>
           }

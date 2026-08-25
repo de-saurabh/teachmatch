@@ -1,11 +1,12 @@
-import { CheckCircleOutlined } from "@ant-design/icons";
+import { BellOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Flex, Space, Typography } from "antd";
+import { Badge, Button, Flex, Space, Typography } from "antd";
 import type { PropsWithChildren } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { signOut, useSession } from "../lib/auth-client";
 import { apiFetch } from "../lib/api";
+import type { Notification } from "../lib/notifications";
 
 export function AppShell({ children }: PropsWithChildren) {
   const { data: session } = useSession();
@@ -18,6 +19,13 @@ export function AppShell({ children }: PropsWithChildren) {
     enabled: Boolean(session),
   });
   const isAdmin = me?.permissions.includes("CAN_REVIEW_VERIFICATION") ?? false;
+
+  const { data: notifications } = useQuery({
+    queryKey: ["notifications", "mine"],
+    queryFn: () => apiFetch<{ notifications: Notification[] }>("/api/notifications/mine"),
+    enabled: Boolean(session),
+  });
+  const unreadCount = notifications?.notifications.filter((n) => !n.readAt).length ?? 0;
 
   async function handleLogout() {
     await signOut();
@@ -39,13 +47,18 @@ export function AppShell({ children }: PropsWithChildren) {
             TeachMatch
           </Typography.Text>
         </Link>
-        <Space size="large">
+        <Space size="large" align="center">
           {accountType === "TEACHER" && <Link to="/jobs">Browse jobs</Link>}
           {accountType === "TEACHER" && <Link to="/matches/mine">Suggested for you</Link>}
           {accountType === "TEACHER" && <Link to="/applications/mine">My applications</Link>}
           {accountType === "SCHOOL" && <Link to="/jobs/mine">My postings</Link>}
           {accountType === "SCHOOL" && <Link to="/jobs/new">Post a job</Link>}
           {isAdmin && <Link to="/admin/verifications">Verification queue</Link>}
+          <Link to="/notifications" style={{ display: "flex", alignItems: "center" }}>
+            <Badge count={unreadCount} size="small">
+              <BellOutlined style={{ fontSize: 16, color: "var(--chalk-white)" }} />
+            </Badge>
+          </Link>
           <Button size="small" onClick={handleLogout}>
             Log out
           </Button>
