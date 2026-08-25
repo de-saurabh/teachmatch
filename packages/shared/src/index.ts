@@ -29,6 +29,7 @@ export type Permission =
 
 export interface JobPostingSummary {
   id: string;
+  schoolName: string;
   subject: string;
   gradeLevel: string;
   board: string;
@@ -37,6 +38,7 @@ export interface JobPostingSummary {
   isUrgent: boolean;
   status: JobPostingStatus;
   salaryBadge: SalaryBadge | null;
+  createdAt: string;
 }
 
 // Computed comparison result shown instead of raw salary numbers —

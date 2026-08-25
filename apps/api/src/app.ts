@@ -5,6 +5,9 @@ import express from "express";
 
 import { auth } from "./config/auth";
 import { healthRouter } from "./routes/health";
+import { jobPostingsRouter } from "./routes/job-postings";
+import { schoolProfileRouter } from "./routes/school-profile";
+import { teacherProfileRouter } from "./routes/teacher-profile";
 
 export function createApp() {
   const app = express();
@@ -21,6 +24,9 @@ export function createApp() {
 
   app.use(express.json());
   app.use(healthRouter);
+  app.use(schoolProfileRouter);
+  app.use(teacherProfileRouter);
+  app.use(jobPostingsRouter);
 
   app.use(
     "/docs",
