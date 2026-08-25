@@ -1,16 +1,19 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import App from "./App";
 
+vi.mock("./lib/auth-client", () => ({
+  useSession: () => ({ data: null, isPending: false }),
+  signIn: { email: vi.fn() },
+  signUp: { email: vi.fn() },
+  signOut: vi.fn(),
+}));
+
 describe("App", () => {
-  it("increments the counter on click", async () => {
+  it("redirects unauthenticated visitors to the login page", async () => {
     render(<App />);
-    const button = screen.getByRole("button", { name: /count is 0/i });
 
-    await userEvent.click(button);
-
-    expect(screen.getByRole("button", { name: /count is 1/i })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: /welcome back/i })).toBeInTheDocument();
   });
 });

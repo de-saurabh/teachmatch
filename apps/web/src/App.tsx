@@ -1,24 +1,27 @@
-import { CheckCircleOutlined } from '@ant-design/icons'
-import { Button, Flex, Typography } from 'antd'
-import { useState } from 'react'
+import { BrowserRouter, Route, Routes } from "react-router";
 
-const { Title, Paragraph } = Typography
+import { DashboardPage } from "./routes/DashboardPage";
+import { LoginPage } from "./routes/LoginPage";
+import { ProtectedRoute } from "./routes/ProtectedRoute";
+import { SignupPage } from "./routes/SignupPage";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <Flex vertical align="center" justify="center" gap="middle" style={{ minHeight: '100vh' }}>
-      <CheckCircleOutlined style={{ fontSize: 40, color: '#3B6E55' }} />
-      <Title level={2} style={{ margin: 0 }}>
-        TeachMatch
-      </Title>
-      <Paragraph type="secondary">Edit src/App.tsx and save to test HMR</Paragraph>
-      <Button type="primary" onClick={() => setCount((count) => count + 1)}>
-        Count is {count}
-      </Button>
-    </Flex>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
