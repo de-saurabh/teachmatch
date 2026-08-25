@@ -14,9 +14,16 @@ jest.mock("@expo-google-fonts/figtree", () => ({
   Figtree_600SemiBold: "Figtree_600SemiBold",
 }));
 
+jest.mock("./src/lib/auth-client", () => ({
+  useSession: () => ({ data: null, isPending: false }),
+  signIn: { email: jest.fn() },
+  signUp: { email: jest.fn() },
+  signOut: jest.fn(),
+}));
+
 describe("App", () => {
-  it("renders the TeachMatch placeholder once fonts are loaded", () => {
+  it("shows the login screen once fonts are loaded and there is no session", () => {
     render(<App />);
-    expect(screen.getByText("TeachMatch")).toBeTruthy();
+    expect(screen.getByText("Welcome back")).toBeTruthy();
   });
 });

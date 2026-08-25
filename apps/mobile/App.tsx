@@ -7,8 +7,15 @@ import {
   Figtree_600SemiBold,
   useFonts as useFigtree,
 } from "@expo-google-fonts/figtree";
+import { NavigationContainer } from "@react-navigation/native";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
+import { RootNavigator } from "./src/navigation/RootNavigator";
+
+const queryClient = new QueryClient();
 
 export default function App() {
   const [caveatLoaded] = useCaveat({ Caveat_700Bold });
@@ -19,15 +26,13 @@ export default function App() {
   }
 
   return (
-    <View className="flex-1 items-center justify-center bg-chalk-board px-6">
-      <View className="items-center rounded border-2 border-dashed border-chalk-white/30 px-8 py-10">
-        <View className="h-9 w-9 items-center justify-center rounded-full border-2 border-chalk-yellow">
-          <Text className="font-figtree-semibold text-chalk-yellow">✓</Text>
-        </View>
-        <Text className="mt-4 font-caveat text-5xl text-chalk-white">TeachMatch</Text>
-        <Text className="mt-2 font-figtree text-chalk-blue">Screens land in the next pass.</Text>
-      </View>
+    <GestureHandlerRootView className="flex-1">
+      <QueryClientProvider client={queryClient}>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </QueryClientProvider>
       <StatusBar style="light" />
-    </View>
+    </GestureHandlerRootView>
   );
 }

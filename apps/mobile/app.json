@@ -1,11 +1,12 @@
 {
   "expo": {
-    "name": "mobile",
+    "name": "TeachMatch",
     "slug": "mobile",
+    "scheme": "teachmatch",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true
     },
