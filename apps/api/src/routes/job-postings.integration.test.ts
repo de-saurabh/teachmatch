@@ -4,6 +4,7 @@ import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createApp } from "../app";
+import { createAdminAgent } from "../test-utils/admin-agent";
 
 describe("job posting flow", () => {
   const app = createApp();
@@ -67,13 +68,25 @@ describe("job posting flow", () => {
     expect(res.status).toBe(403);
   });
 
-  it("appears in the open listing with the school's name attached", async () => {
-    const res = await request(app).get("/api/job-postings");
-    expect(res.status).toBe(200);
+  it("stays out of the open listing until the school is verified", async () => {
+    const mineRes = await schoolAgent.get("/api/job-postings/mine");
+    const postingId = mineRes.body.postings[0].id;
+
+    const before = await request(app).get("/api/job-postings");
+    expect(before.body.postings.some((posting: { id: string }) => posting.id === postingId)).toBe(false);
+
+    const schoolProfileRes = await schoolAgent.get("/api/school-profile/me");
+    const admin = await createAdminAgent(app);
+    const verifyRes = await admin
+      .patch(`/api/admin/verifications/school/${schoolProfileRes.body.profile.id}`)
+      .send({ status: "VERIFIED" });
+    expect(verifyRes.status).toBe(200);
+
+    const after = await request(app).get("/api/job-postings");
+    expect(after.status).toBe(200);
     expect(
-      res.body.postings.some(
-        (posting: { subject: string; schoolName: string }) =>
-          posting.subject === "Mathematics" && posting.schoolName === "Green Valley School",
+      after.body.postings.some(
+        (posting: { id: string; schoolName: string }) => posting.id === postingId && posting.schoolName === "Green Valley School",
       ),
     ).toBe(true);
   });

@@ -4,6 +4,7 @@ import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import { createApp } from "../app";
+import { createAdminAgent } from "../test-utils/admin-agent";
 
 describe("job posting management", () => {
   const app = createApp();
@@ -31,6 +32,12 @@ describe("job posting management", () => {
       state: "Maharashtra",
     });
     postingId = postRes.body.posting.id;
+
+    const schoolProfileRes = await schoolAgent.get("/api/school-profile/me");
+    const admin = await createAdminAgent(app);
+    await admin
+      .patch(`/api/admin/verifications/school/${schoolProfileRes.body.profile.id}`)
+      .send({ status: "VERIFIED" });
   });
 
   it("lets the owning school fetch a single posting", async () => {
@@ -111,6 +118,12 @@ describe("job posting browse filters", () => {
       city: "Nashik",
       state: "Maharashtra",
     });
+
+    const schoolProfileRes = await schoolAgent.get("/api/school-profile/me");
+    const admin = await createAdminAgent(app);
+    await admin
+      .patch(`/api/admin/verifications/school/${schoolProfileRes.body.profile.id}`)
+      .send({ status: "VERIFIED" });
   });
 
   it("filters by subject", async () => {

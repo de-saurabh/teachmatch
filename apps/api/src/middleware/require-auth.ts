@@ -1,8 +1,9 @@
-import type { AccountType } from "@teachmatch/shared";
+import type { AccountType, Permission } from "@teachmatch/shared";
 import { fromNodeHeaders } from "better-auth/node";
 import type { NextFunction, Request, Response } from "express";
 
 import { auth } from "../config/auth";
+import { db } from "../config/db";
 
 type Session = NonNullable<Awaited<ReturnType<typeof auth.api.getSession>>>;
 
@@ -37,6 +38,21 @@ export function requireAccountType(...accountTypes: AccountType[]) {
       res.status(403).json({ error: "Not permitted for this account type" });
       return;
     }
+    next();
+  };
+}
+
+export function requirePermission(permission: Permission) {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const grant = await db.adminPermission.findUnique({
+      where: { userId_permission: { userId: req.session!.user.id, permission } },
+    });
+
+    if (!grant) {
+      res.status(403).json({ error: "Not permitted" });
+      return;
+    }
+
     next();
   };
 }

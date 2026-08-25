@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 
+import { AdminVerificationsPage } from "./routes/AdminVerificationsPage";
 import { AppShell } from "./routes/AppShell";
 import { DashboardPage } from "./routes/DashboardPage";
 import { EditJobPostingPage } from "./routes/EditJobPostingPage";
@@ -107,6 +108,16 @@ function App() {
             <ProtectedRoute>
               <AppShell>
                 <MyApplicationsPage />
+              </AppShell>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/verifications"
+          element={
+            <ProtectedRoute>
+              <AppShell>
+                <AdminVerificationsPage />
               </AppShell>
             </ProtectedRoute>
           }

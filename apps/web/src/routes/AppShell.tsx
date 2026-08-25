@@ -1,14 +1,23 @@
 import { CheckCircleOutlined } from "@ant-design/icons";
+import { useQuery } from "@tanstack/react-query";
 import { Button, Flex, Space, Typography } from "antd";
 import type { PropsWithChildren } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { signOut, useSession } from "../lib/auth-client";
+import { apiFetch } from "../lib/api";
 
 export function AppShell({ children }: PropsWithChildren) {
   const { data: session } = useSession();
   const navigate = useNavigate();
   const accountType = session?.user.accountType;
+
+  const { data: me } = useQuery({
+    queryKey: ["admin", "me"],
+    queryFn: () => apiFetch<{ permissions: string[] }>("/api/admin/me"),
+    enabled: Boolean(session),
+  });
+  const isAdmin = me?.permissions.includes("CAN_REVIEW_VERIFICATION") ?? false;
 
   async function handleLogout() {
     await signOut();
@@ -35,6 +44,7 @@ export function AppShell({ children }: PropsWithChildren) {
           {accountType === "TEACHER" && <Link to="/applications/mine">My applications</Link>}
           {accountType === "SCHOOL" && <Link to="/jobs/mine">My postings</Link>}
           {accountType === "SCHOOL" && <Link to="/jobs/new">Post a job</Link>}
+          {isAdmin && <Link to="/admin/verifications">Verification queue</Link>}
           <Button size="small" onClick={handleLogout}>
             Log out
           </Button>

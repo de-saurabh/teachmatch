@@ -44,8 +44,8 @@ const browseQuerySchema = z.object({
     .transform((value) => (value === undefined ? undefined : value === "true")),
 });
 
-// Open postings a teacher can browse. Visibility isn't yet gated on
-// school verification status — that lands with the admin review flow.
+// Open postings a teacher can browse. Only from schools the admin
+// team has verified — a posting stays invisible here until then.
 jobPostingsRouter.get("/api/job-postings", async (req, res) => {
   const query = browseQuerySchema.safeParse(req.query);
   if (!query.success) {
@@ -61,6 +61,7 @@ jobPostingsRouter.get("/api/job-postings", async (req, res) => {
   const postings = await db.jobPosting.findMany({
     where: {
       status: "OPEN",
+      school: { isHidden: false },
       ...(query.data.subject && { subject: { contains: query.data.subject, mode: "insensitive" } }),
       ...(query.data.city && { city: { contains: query.data.city, mode: "insensitive" } }),
       ...(query.data.board && { board: { contains: query.data.board, mode: "insensitive" } }),

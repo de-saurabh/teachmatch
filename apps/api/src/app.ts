@@ -4,6 +4,7 @@ import cors from "cors";
 import express from "express";
 
 import { auth } from "./config/auth";
+import { adminRouter } from "./routes/admin";
 import { applicationsRouter } from "./routes/applications";
 import { healthRouter } from "./routes/health";
 import { jobPostingsRouter } from "./routes/job-postings";
@@ -29,6 +30,7 @@ export function createApp() {
   app.use(teacherProfileRouter);
   app.use(jobPostingsRouter);
   app.use(applicationsRouter);
+  app.use(adminRouter);
 
   app.use(
     "/docs",
